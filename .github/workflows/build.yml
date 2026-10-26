@@ -28,7 +28,7 @@ jobs:
             staging_dir
             build_dir/host
             dl
-          key: cc385-toolchain-24.10
+          key: cc385-toolchain-24.10-v2
 
       - name: Feeds
         run: |
@@ -37,6 +37,7 @@ jobs:
 
       - name: Configure
         run: |
+          find . -type f -exec touch -d '2020-01-01 00:00:00' {} + 2>/dev/null || true
           cat > .config <<'EOF'
           CONFIG_TARGET_mvebu=y
           CONFIG_TARGET_mvebu_cortexa9=y
