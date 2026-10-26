@@ -65,8 +65,11 @@ jobs:
           assert len(dts) == 1, dts
           p = dts[0]
           s = open(p).read()
-          # 删掉官方默认的 3 个分区节点
+
+          # 1) 删除官方默认分区节点
           s = re.sub(r'\n[ \t]*(?:mtd\d+|partition)@[0-9a-fA-F]+[ \t]*\{[^{}]*\};', '', s)
+
+          # 2) 新分区定义（极域布局，1GiB NAND）
           NEW = '''
           			partition@0 {
           				label = "u-boot";
@@ -114,15 +117,37 @@ jobs:
           				reg = <0x3e800000 0x01800000>;
           			};
           '''
-          anchor = 'nand-on-flash-bbt;'
-          assert anchor in s, 'anchor not found'
-          assert 'kernel1' not in s
-          s = s.replace(anchor, anchor + '\n' + NEW, 1)
+
+          def insert_before_closing(src, start_idx):
+              depth = 0
+              for j in range(start_idx, len(src)):
+                  if src[j] == '{': depth += 1
+                  elif src[j] == '}':
+                      depth -= 1
+                      if depth == 0:
+                          return j
+              raise RuntimeError('no closing brace')
+
+          # 3) 优先插进 partitions 容器；没有容器就插到 &nfc 节点末尾（保证在全部属性之后）
+          pm = re.search(r'partitions[ \t]*\{', s)
+          if pm:
+              i = s.index('{', pm.start())
+          else:
+              nm = re.search(r'&nfc[ \t]*\{', s)
+              assert nm, 'nfc node not found'
+              i = s.index('{', nm.start())
+          pos = insert_before_closing(s, i)
+          s = s[:pos] + '\n' + NEW + s[pos:]
           open(p, 'w').write(s)
           print('patched:', p)
           PYEOF
           python3 /tmp/patch_dts.py
 
+      - name: Verify DTB compiles
+        run: |
+          L=$(echo build_dir/target-*/linux-mvebu_cortexa9/linux-*)
+          make -C "$L" ARCH=arm armada-385-db-ap.dtb
+          
       - name: Build
         run: make -j$(nproc) || make -j1 V=s
 
