@@ -41,7 +41,7 @@ jobs:
           cat > .config <<'EOF'
           CONFIG_TARGET_mvebu=y
           CONFIG_TARGET_mvebu_cortexa9=y
-          CONFIG_TARGET_mvebu_cortexa9_DEVICE_armada-a385-db-ap=y
+          CONFIG_TARGET_mvebu_cortexa9_DEVICE_marvell_a385-db-ap=y
           CONFIG_PACKAGE_kmod-ath10k=y
           CONFIG_PACKAGE_ath10k-firmware-qca988x=y
           CONFIG_PACKAGE_kmod-usb3=y
@@ -54,6 +54,7 @@ jobs:
           CONFIG_PACKAGE_luci=y
           EOF
           make defconfig
+          grep 'CONFIG_TARGET_mvebu_cortexa9_DEVICE' .config
 
       - name: Prepare kernel tree
         run: make target/linux/prepare V=s
@@ -129,7 +130,7 @@ jobs:
                           return j
               raise RuntimeError('no closing brace')
 
-          # 3) 优先插进 partitions 容器；没有容器就插到 &nfc 节点末尾（保证在全部属性之后）
+          # 3) 优先插进 partitions 容器；没有容器就插到 &nfc 节点末尾
           pm = re.search(r'partitions[ \t]*\{', s)
           if pm:
               i = s.index('{', pm.start())
@@ -149,7 +150,7 @@ jobs:
           L=$(echo build_dir/target-*/linux-mvebu_cortexa9/linux-*)
           make -C "$L" ARCH=arm defconfig
           make -C "$L" ARCH=arm marvell/armada-385-db-ap.dtb
-          
+
       - name: Build
         run: make -j$(nproc) || make -j1 V=s
 
