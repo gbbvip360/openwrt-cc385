@@ -146,6 +146,7 @@ jobs:
       - name: Verify DTB compiles
         run: |
           L=$(echo build_dir/target-*/linux-mvebu_cortexa9/linux-*)
+          make -C "$L" ARCH=arm defconfig
           make -C "$L" ARCH=arm armada-385-db-ap.dtb
           
       - name: Build
