@@ -147,7 +147,7 @@ jobs:
         run: |
           L=$(echo build_dir/target-*/linux-mvebu_cortexa9/linux-*)
           make -C "$L" ARCH=arm defconfig
-          make -C "$L" ARCH=arm armada-385-db-ap.dtb
+          make -C "$L" ARCH=arm marvell/armada-385-db-ap.dtb
           
       - name: Build
         run: make -j$(nproc) || make -j1 V=s
